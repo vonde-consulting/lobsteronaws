@@ -1,24 +1,3 @@
-"""
-aws emr create-cluster
---applications Name=Ganglia Name=Hadoop Name=Spark
---tags 'Name=Ruihong Test'
---ec2-attributes '{"KeyName":"ec2_t2_ruihong","InstanceProfile":"EMR_EC2_DefaultRole","SubnetId":"subnet-7206953f","EmrManagedSlaveSecurityGroup":"sg-37c23b5f","EmrManagedMasterSecurityGroup":"sg-63c33a0b","AdditionalMasterSecurityGroups":["sg-0c5e7dfece90390ff"]}' --release-label emr-5.29.0 --log-uri 's3n://aws-logs-017077188059-eu-west-2/elasticmapreduce/'
---steps
---instance-groups
---auto-terminate
---auto-scaling-role EMR_AutoScaling_DefaultRole
---ebs-root-volume-size 10
---service-role EMR_DefaultRole
---name 'Ruihong Test Auto Scale'
---scale-down-behavior TERMINATE_AT_TASK_COMPLETION
---region eu-west-2
-
-aws emr create-cluster --applications Name=Ganglia Name=Hadoop Name=Spark --tags 'Name=Ruihong Test'
---ec2-attributes '{"KeyName":"ec2_t2_ruihong","InstanceProfile":"EMR_EC2_DefaultRole","SubnetId":"subnet-7206953f","EmrManagedSlaveSecurityGroup":"sg-37c23b5f","EmrManagedMasterSecurityGroup":"sg-63c33a0b","AdditionalMasterSecurityGroups":["sg-0c5e7dfece90390ff"]}' --release-label emr-5.29.0 --log-uri 's3n://aws-logs-017077188059-eu-west-2/elasticmapreduce/' --steps '[{"Args":["spark-submit","--deploy-mode","client","--driver-memory","6G","--driver-cores","3","--executor-memory","11G","--executor-cores","3","--class","com.lobsterdata.app.ConstructBook","s3://bookconstructor-lobsterdata-com/com-lobsterdata-bookconstructor_2.11-0.1.jar","s3://demo-ordermessage-lobsterdata-com/NASDAQ100-2019-12-30.txt","s3://demo-ordermessage-lobsterdata-com","s3://ruihong-testing-bucket/demo","parquet","10"],"Type":"CUSTOM_JAR","ActionOnFailure":"TERMINATE_CLUSTER","Jar":"command-runner.jar","Properties":"","Name":"Spark application"}]'
---instance-groups
---auto-terminate --auto-scaling-role EMR_AutoScaling_DefaultRole --ebs-root-volume-size 10 --service-role EMR_DefaultRole --name 'Ruihong Test Auto Scale' --scale-down-behavior TERMINATE_AT_TASK_COMPLETION --region eu-west-2
-
-"""
 import subprocess
 
 
@@ -34,24 +13,27 @@ class BaseEMR:
         self.region = kwargs.get("region", "eu-west-2")
         self.key_name = key_name
         self.credential_profile = kwargs.get("credential_profile", "default")
+        self.log_uri = kwargs.get("log_uri", None)
 
     def create(self):
         _applications = ' '.join([f'Name={app}' for app in self.applications])
         _tags = ' '.join([f"{_k}={_v}" for (_k, _v) in self.tags.items()])
         _command = "aws emr create-cluster " + \
                    f"--release-label emr-5.29.0 " + \
-                   f"--ec2-attributes InstanceProfile=EMR_EC2_DefaultRole,KeyName={self.key_name}" + \
+                   f"--ec2-attributes InstanceProfile=EMR_EC2_DefaultRole,KeyName={self.key_name} " + \
                    f"--applications {_applications} " + \
                    f"--tags '{_tags}' " + \
                    f"--instance-groups file://{self.instance_groups} " + \
                    f"--steps file://{self.steps} " + \
                    f"--auto-scaling-role EMR_AutoScaling_DefaultRole  " + \
                    f"--service-role EMR_DefaultRole " + \
-                   f"--name {self.name}  " + \
+                   f"--name '{self.name}'  " + \
                    f"--profile {self.credential_profile}  " + \
                    f"--region {self.region} "
         if self.auto_terminate:
             _command = _command + "--auto-terminate "
+        if not (self.log_uri is None):
+            _command = _command + f"--log-uri {self.log_uri} "
         print(_command)
         subprocess.run(_command, shell=True)
 

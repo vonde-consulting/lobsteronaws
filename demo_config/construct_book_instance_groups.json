@@ -1,0 +1,104 @@
+[
+  {
+    "InstanceCount": 1,
+    "BidPrice": "10.000",
+    "EbsConfiguration": {
+      "EbsBlockDeviceConfigs": [
+        {
+          "VolumeSpecification": {
+            "SizeInGB": 32,
+            "VolumeType": "gp2"
+          },
+          "VolumesPerInstance": 2
+        }
+      ]
+    },
+    "InstanceGroupType": "MASTER",
+    "InstanceType": "c4.xlarge",
+    "Name": "Master - 1"
+  },
+  {
+    "InstanceCount": 2,
+    "BidPrice": "10.000",
+    "EbsConfiguration": {
+      "EbsBlockDeviceConfigs": [
+        {
+          "VolumeSpecification": {
+            "SizeInGB": 64,
+            "VolumeType": "gp2"
+          },
+          "VolumesPerInstance": 1
+        }
+      ]
+    },
+    "InstanceGroupType": "CORE",
+    "InstanceType": "m5.4xlarge",
+    "Name": "Core-BookConstruct-Demo",
+    "AutoScalingPolicy": {
+      "Constraints": {
+        "MinCapacity": 1,
+        "MaxCapacity": 10
+      },
+      "Rules": [
+        {
+          "Name": "Default-scale-out",
+          "Description": "Replicates the default scale-out rule in the console for YARN memory.",
+          "Action": {
+            "SimpleScalingPolicyConfiguration": {
+              "AdjustmentType": "CHANGE_IN_CAPACITY",
+              "ScalingAdjustment": 1,
+              "CoolDown": 300
+            }
+          },
+          "Trigger": {
+            "CloudWatchAlarmDefinition": {
+              "ComparisonOperator": "LESS_THAN",
+              "EvaluationPeriods": 1,
+              "MetricName": "MemoryAvailableMB",
+              "Namespace": "AWS/ElasticMapReduce",
+              "Period": 300,
+              "Statistic": "AVERAGE",
+              "Threshold": 15000.0,
+              "Unit": "COUNT",
+              "Dimensions": [
+                {
+                  "Key": "JobFlowId",
+                  "Value": "${emr.clusterId}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "Name": "ShrinkMemory",
+          "Description": "",
+          "Action": {
+            "SimpleScalingPolicyConfiguration": {
+              "AdjustmentType": "CHANGE_IN_CAPACITY",
+              "ScalingAdjustment": -1,
+              "CoolDown": 300
+            }
+          },
+          "Trigger": {
+            "CloudWatchAlarmDefinition": {
+              "ComparisonOperator": "GREATER_THAN_OR_EQUAL",
+              "EvaluationPeriods": 1,
+              "MetricName": "MemoryAvailableMB",
+              "Namespace": "AWS/ElasticMapReduce",
+              "Period": 300,
+              "Statistic": "AVERAGE",
+              "Threshold": 80000.0,
+              "Unit": "COUNT",
+              "Dimensions": [
+                {
+                  "Key": "JobFlowId",
+                  "Value": "${emr.clusterId}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+]

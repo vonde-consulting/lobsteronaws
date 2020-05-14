@@ -24,7 +24,7 @@
  A simple way to create all those roles is create a cluster in EMR with Quick Options in 
  [EMR interface in Amazon S3 console](https://eu-west-2.console.aws.amazon.com/elasticmapreduce/).
  
- ## Steps to Run the Demo Construction
+ ## Run the Constructing Program
  After cloning the repository, please familiarise yourself of the usage of ``construct_order_book.py``.
  ```bash
 $ python construct_order_book.py --help
@@ -78,7 +78,8 @@ optional arguments:
       The location and the IAM guidance will be release to you soon.
       -->
     * Demo: the LOBSTER team has 30th December 2019 data open to public at  s3://demo-ordermessage-lobsterdata-com
- * OUTPUT_PATH: Required argument. S3 prefix for output the data. Note that the two more sub-prefix will create for the output. 
+ * OUTPUT_PATH: Required argument. S3 prefix for output the data. 
+    Note that the two more sub-prefix will create for the output. 
     * OUTPUT_PATH/log: the log information of the construction
     * OUTPUT_PATH/orderbook: the output order book data partitioned by date
  * INSTANCE_GROUPS: Optional argument. It is the uniformed instance configuration for the cluster. 
@@ -97,4 +98,54 @@ optional arguments:
     Note that in any case, LOBSTER will partition the output by ``date`` and ``symbol``. 
     So the number of partitions could be simply understood as the number of output files in a day.
  
-        
+Here is an example of constructing with minimum argument.
+```bash
+python construct_order_book.py \
+    -t s3://demo-ordermessage-lobsterdata-com/NASDAQ100-2019-12-30.txt \
+    -k <my paired key without .pem> \
+    -o s3:<ouput prefix or bucket> \
+    -i s3://demo-ordermessage-lobsterdata-com
+```
+The wrapper will then ask you to double check the settings:
+```text
+ You are about to start the following task on AWS:
+    * Task file: s3://demo-ordermessage-lobsterdata-com/NASDAQ100-2019-12-30.txt
+    * Instance groups: <work directory>/demo_config/construct_book_instance_groups.json
+    * Input path: s3://demo-ordermessage-lobsterdata-com
+    * Output path: s3:<output prefix or bucket>
+    * Output format: parquet
+    * Number of partition: 10 (0 means using Spark default number)
+    * Lobster engine jar file: s3://bookconstructor-lobsterdata-com/com-lobsterdata-bookconstructor_2.11-0.1.jar
+    * EMR pair key: <my paired key without .pem>
+    * Region: eu-west-2
+    * Log location: s3:<output prefix or bucket>/log
+    Please confirm (yes or no) >> 
+```
+ Once you confirm those information by ``yes``, the cluster will be kicked off.
+## Monitor the Constructing Process
+If the command line has been executed successfully, you should see a output such as
+```text
+{
+    "ClusterId": "j-1CREQ25V98G5O",
+    "ClusterArn": "arn:aws:elasticmapreduce:eu-west-2:497960385777:cluster/j-13AIH5MWUVROR"
+}
+```
+An new cluster called ``Lobster Book Construction`` will also show up in your 
+[cluster list](https://eu-west-2.console.aws.amazon.com/elasticmapreduce) as the following. 
+If you cannot see this, please double check that the region setting at the top left of the web page is consistent
+with the region in which you create the cluster.
+![cluster list](images/cluster_list.png)
+
+Click on ``Lobster Book Construction`` to enter the description of the cluster. 
+In the steps page, you will see that the task ``Lobster Book Construction`` has been associated.
+![construction step](images/construction_step.png)
+
+Further more your can enable web connection on the ``Summary``, following the guidance provided by Amazon AWS team.
+The wrapper indeed has installed Ganglia in the cluster, 
+you can use it to monitor the resources usage of the cluster.
+![ganaglia](images/ganglia.png)  
+
+Once the task has been completed, the cluster will be shut down automatically.
+![construct completed](images/construct_completed.png) 
+
+## Investigate the Order Book
