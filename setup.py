@@ -4,7 +4,7 @@ with open("README.txt", "r") as fh:
 
 setup(
     name='lobsteronaws',
-    version='0.1',
+    version='0.1.2',
     author="Ruihong Huang",
     author_email="huang@lobsterdata.com",
     packages=find_packages(),
