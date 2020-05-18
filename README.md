@@ -16,7 +16,8 @@
     on your local machine 
  2. Python 3 installation on you local machine. For people who like to use Spark to read demo output, the python version
     should be ``3.7``, because ``pyspark`` does not support ``3.8`` so far; and
- 4. Python packages: ``pandas``, ``matplotlib``,  ``jupyterlab`` and ``pyarrow``. Additional ``pyspark`` for people like to use Spark.
+ 4. Python packages: ``pandas``, ``matplotlib`` and ``pyarrow``. Additional ``pyspark`` for people like to use Spark.
+    I recommend ``jupyterlab`` for people like to try out the demo jupyter notebook. 
  
  Note that this version of wrapper uses the default role setting of EMR, please make sure that those roles exist and are 
  visible for the user.
@@ -25,8 +26,13 @@
  [EMR interface in Amazon S3 console](https://eu-west-2.console.aws.amazon.com/elasticmapreduce/).
  
  ## Run the Constructing Program
- After cloning the repository, please familiarise yourself of the usage of ``construct_order_book.py``.
- ```bash
+You can install the package from pypi by
+```bash
+$ pip install lobsteronaws 
+```
+In the ``demo`` directory, there is simple script to construct the demo data set 
+(10-level order books for NASDAQ100 on 30 December, 2019).
+```bash
 $ python demo/construct_order_book.py --help
 usage: construct_order_book.py [-h] -t TASK_FILE -k KEY_NAME -i INPUT_PATH -o
                                OUTPUT_PATH [-g INSTANCE_GROUPS] [-j JAR_FILE]
@@ -83,7 +89,7 @@ optional arguments:
     * OUTPUT_PATH/log: the log information of the construction
     * OUTPUT_PATH/orderbook: the output order book data partitioned by date
  * INSTANCE_GROUPS: Optional argument. It is the uniformed instance configuration for the cluster. 
-    If not provided, the wrapper will pick up ``demo_config/construct_book_instance_groups.json`` as the configure file.
+    If not provided, the wrapper will pick up ``demo/config/construct_book_instance_groups.json`` as the configure file.
     This configuration include auto-scaling setting. 
     It could one to ten m5.4xlarge EC2 instances, depending the loading.
  * JAR_FILE: Optional argument. This is the Jar file contains LOBSTER engine. The current location is
@@ -153,3 +159,7 @@ Download the order book data to your local machine.
 ```bash
 $ aws s3 sync s3:<your output S3 bucket or prefix> <your local directory>
 ```
+Open either ``demo/lobster_demo.py`` or [demo/lobster_demo.ipynb](https://github.com/vonde-consulting/lobsteronaws/blob/master/lobsteronaws/demo/lobster_demo.ipynb), and modify the the ``order_book_parquet_directory``
+to your local directory. Note that the demo 10-level order books of NASDAQ 100 constituents could be to big for you 
+local machine. <span style="color:red"> 
+So please consider to delete some parquet files before running the demo code. </span> 
