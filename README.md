@@ -16,7 +16,7 @@
     on your local machine 
  2. Python 3 installation on you local machine. For people who like to use Spark to read demo output, the python version
     should be ``3.7``, because ``pyspark`` does not support ``3.8`` so far; and
- 4. Python packages: ``pandas`` and ``pyarrow``. Additional ``pyspark`` for people like to use Spark.
+ 4. Python packages: ``pandas``, ``matplotlib``,  ``jupyterlab`` and ``pyarrow``. Additional ``pyspark`` for people like to use Spark.
  
  Note that this version of wrapper uses the default role setting of EMR, please make sure that those roles exist and are 
  visible for the user.
@@ -27,7 +27,7 @@
  ## Run the Constructing Program
  After cloning the repository, please familiarise yourself of the usage of ``construct_order_book.py``.
  ```bash
-$ python construct_order_book.py --help
+$ python demo/construct_order_book.py --help
 usage: construct_order_book.py [-h] -t TASK_FILE -k KEY_NAME -i INPUT_PATH -o
                                OUTPUT_PATH [-g INSTANCE_GROUPS] [-j JAR_FILE]
                                [-f OUTPUT_FORMAT] [-r REGION]
@@ -110,7 +110,7 @@ The wrapper will then ask you to double check the settings:
 ```text
  You are about to start the following task on AWS:
     * Task file: s3://demo-ordermessage-lobsterdata-com/NASDAQ100-2019-12-30.txt
-    * Instance groups: <work directory>/demo_config/construct_book_instance_groups.json
+    * Instance groups: <work directory>/demo/config/construct_book_instance_groups.json
     * Input path: s3://demo-ordermessage-lobsterdata-com
     * Output path: s3:<output prefix or bucket>
     * Output format: parquet
@@ -149,3 +149,7 @@ Once the task has been completed, the cluster will be shut down automatically.
 ![construct completed](images/construct_completed.png) 
 
 ## Investigate the Order Book
+Download the order book data to your local machine. 
+```bash
+$ aws s3 sync s3:<your output S3 bucket or prefix> <your local directory>
+```
