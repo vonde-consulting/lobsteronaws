@@ -1,6 +1,6 @@
 import tempfile
 
-from aws.emr import LobsterEMR
+from lobsteronaws.aws.emr import LobsterEMR
 
 
 def prepare_instance_group_json_file():
@@ -142,7 +142,7 @@ def main():
                         help="Input path. The default is s3://demo-ordermessage-lobsterdata-com")
     parser.add_argument('-o', '--output_path', required=True, help="Output path. Required. S3 location.")
     parser.add_argument('-g', '--instance_groups',
-                        default=os.path.join(dir_path, "demo_config", "construct_book_instance_groups.json"),
+                        default=os.path.join(dir_path, "config", "construct_book_instance_groups.json"),
                         help="Instance group configure JSON file")
     parser.add_argument('-j', '--jar_file',
                         default="s3://bookconstructor-lobsterdata-com/com-lobsterdata-bookconstructor_2.11-0.1.jar",
