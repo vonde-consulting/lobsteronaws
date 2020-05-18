@@ -161,5 +161,5 @@ $ aws s3 sync s3:<your output S3 bucket or prefix> <your local directory>
 ```
 Open either ``demo/lobster_demo.py`` or [demo/lobster_demo.ipynb](https://github.com/vonde-consulting/lobsteronaws/blob/master/lobsteronaws/demo/lobster_demo.ipynb), and modify the the ``order_book_parquet_directory``
 to your local directory. Note that the demo 10-level order books of NASDAQ 100 constituents could be to big for you 
-local machine. <span style="color:red"> 
-So please consider to delete some parquet files before running the demo code. </span> 
+local machine. So please consider to delete some parquet files before running the demo code.
+![modify variables](images/modify_var.png)
