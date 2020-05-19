@@ -1,97 +1,16 @@
 import tempfile
 
 from lobsteronaws.aws.emr import LobsterEMR
+import subprocess
 
 
-def prepare_instance_group_json_file():
-    _file_name = tempfile.NamedTemporaryFile().name + ".json"
-    with open(_file_name, 'w') as f:
-        f.write("""
-[
-  {
-    "InstanceCount": 1,
-    "BidPrice": "10.000",
-    "EbsConfiguration": {
-      "EbsBlockDeviceConfigs": [
-        {
-          "VolumeSpecification": {
-            "SizeInGB": 32,
-            "VolumeType": "gp2"
-          },
-          "VolumesPerInstance": 2
-        }
-      ]
-    },
-    "InstanceGroupType": "MASTER",
-    "InstanceType": "c4.xlarge",
-    "Name": "Master - 1"
-  },
-  {
-    "InstanceCount": 2,
-    "BidPrice": "10.000",
-    "EbsConfiguration": {
-      "EbsBlockDeviceConfigs": [
-        {
-          "VolumeSpecification": {
-            "SizeInGB": 64,
-            "VolumeType": "gp2"
-          },
-          "VolumesPerInstance": 1
-        }
-      ]
-    },
-    "InstanceGroupType": "CORE",
-    "InstanceType": "m5.4xlarge",
-    "Name": "Core-BookConstruct-Demo",
-    "AutoScalingPolicy":
-    {
-     "Constraints":
-      {
-       "MinCapacity": 1,
-       "MaxCapacity": 10
-      },
-     "Rules":
-     [
-      {
-       "Name": "Default-scale-out",
-       "Description": "Replicates the default scale-out rule in the console for YARN memory.",
-       "Action":{
-        "SimpleScalingPolicyConfiguration":{
-          "AdjustmentType": "CHANGE_IN_CAPACITY",
-          "ScalingAdjustment": 1,
-          "CoolDown": 300
-        }
-       },
-       "Trigger":{
-        "CloudWatchAlarmDefinition":{
-          "ComparisonOperator": "LESS_THAN",
-          "EvaluationPeriods": 1,
-          "MetricName": "YARNMemoryAvailablePercentage",
-          "Namespace": "AWS/ElasticMapReduce",
-          "Period": 300,
-          "Threshold": 10,
-          "Statistic": "AVERAGE",
-          "Unit": "PERCENT",
-          "Dimensions":[
-             {
-               "Key" : "JobFlowId",
-               "Value" : "${emr.clusterId}"
-             }
-          ]
-        }
-       }
-      }
-     ]
-   }
-  }
-]
-        """)
-        return _file_name
+def upload_file_to_s3(source_file: str, target_s3_object: str, aws_profile: str) -> None:
+    subprocess.run(f"aws s3 cp {source_file} {target_s3_object} --profile {aws_profile}", shell=True, check=True)
 
 
-def prepare_steps_json_file(s3_request_file, s3_input_path, s3_output_path,
+def prepare_steps_json_file(s3_request_file: str, s3_input_path: str, s3_output_path: str,
                             s3_jar="s3://bookconstructor-lobsterdata-com/com-lobsterdata-bookconstructor_2.11-0.1.jar",
-                            output_format="parquet", num_partitions=0):
+                            output_format="parquet", num_partitions=0, executor_memory="11G") -> str:
     _file_name = tempfile.NamedTemporaryFile().name + ".json"
     with open(_file_name, mode='w') as f:
         f.write(f"""
@@ -106,9 +25,9 @@ def prepare_steps_json_file(s3_request_file, s3_input_path, s3_output_path,
                 "--driver-cores",
                 "3",
                 "--executor-memory",
-                "11G",
+                "{executor_memory}",
                 "--executor-cores",
-                "3",
+                "3",  
                 "--class",
                 "com.lobsterdata.app.ConstructBook",
                 "{s3_jar}",
@@ -133,10 +52,13 @@ def prepare_steps_json_file(s3_request_file, s3_input_path, s3_output_path,
 def main():
     import argparse
     import os
+    from datetime import datetime
+
     dir_path = os.path.dirname(os.path.realpath(__file__))
     parser = argparse.ArgumentParser(description="Construct order book using LOBSTER engine")
-    parser.add_argument('-t', '--task_file', required=True, help="""S3 task file. 
-                            Example file: s3://demo-ordermessage-lobsterdata-com/NASDAQ100-2019-12-30.txt""")
+    parser.add_argument('-t', '--task_file', required=True,
+                        help="Local task file. This file will be copied to s3 as outputpath/<time>/task.csv. " + \
+                             "Template file: s3://demo-ordermessage-lobsterdata-com/NASDAQ100-2019-12-30.txt")
     parser.add_argument('-k', '--key_name', required=True, help="EMR pair key name")
     parser.add_argument('-i', '--input_path', required=True,
                         help="Input path. The default is s3://demo-ordermessage-lobsterdata-com")
@@ -164,7 +86,7 @@ def main():
     task_file = args.task_file
     instance_groups = args.instance_groups
     input_path = args.input_path
-    output_path = args.output_path
+    output_path = args.output_path + "/" + datetime.now().strftime("%Y%m%d%H%M%S")
     output_format = args.output_format
     num_partitions = args.num_partitions
     jar_file = args.jar_file
@@ -172,9 +94,11 @@ def main():
     region = args.region
     profile = args.credential_profile
     log_uri = output_path + "/log"
+    task_file_s3 = output_path + "/task.txt"
     confirmation = input(f"""
     You are about to start the following task on AWS:
-    * Task file: {task_file}
+    * Local task file: {task_file}
+    * S3 task file location: {task_file_s3}
     * Instance groups: {instance_groups}
     * Input path: {input_path}
     * Output path: {output_path}
@@ -186,7 +110,8 @@ def main():
     * Log location: {log_uri}
     Please confirm (yes or no) >> """)
     if confirmation == 'yes':
-        step_file = prepare_steps_json_file(task_file, input_path, output_path, jar_file,
+        upload_file_to_s3(task_file, task_file_s3)
+        step_file = prepare_steps_json_file(task_file_s3, input_path, output_path, jar_file,
                                             output_format, num_partitions)
         construction_emr = LobsterEMR(instance_groups, step_file, key_name, name='Lobster Book Construction',
                                       region=region, credential_profile=profile, log_uri=log_uri)
