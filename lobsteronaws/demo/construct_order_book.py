@@ -1,12 +1,6 @@
 import tempfile
 
-from lobsteronaws.aws.emr import LobsterEMR
-import subprocess
-
-
-def upload_file_to_s3(source_file: str, target_s3_object: str, aws_profile: str) -> None:
-    subprocess.run(f"aws s3 cp {source_file} {target_s3_object} --profile {aws_profile}", shell=True, check=True)
-
+from lobsteronaws.aws.emr import LobsterEMR, upload_file_to_s3
 
 def prepare_steps_json_file(s3_request_file: str, s3_input_path: str, s3_output_path: str,
                             s3_jar="s3://bookconstructor-lobsterdata-com/com-lobsterdata-bookconstructor_2.11-0.1.jar",

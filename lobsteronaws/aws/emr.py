@@ -1,6 +1,10 @@
 import subprocess
 
 
+def upload_file_to_s3(source_file: str, target_s3_object: str, aws_profile: str = 'default') -> None:
+    subprocess.run(f"aws s3 cp {source_file} {target_s3_object} --profile {aws_profile}", shell=True, check=True)
+
+
 class BaseEMR:
     def __init__(self, instance_group_json_file, steps_json_file, key_name, **kwargs):
         self.applications = kwargs.get("applications", [])

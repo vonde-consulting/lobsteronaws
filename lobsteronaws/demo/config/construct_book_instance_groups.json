@@ -9,7 +9,7 @@
             "SizeInGB": 32,
             "VolumeType": "gp2"
           },
-          "VolumesPerInstance": 2
+          "VolumesPerInstance": 1
         }
       ]
     },
@@ -18,7 +18,7 @@
     "Name": "Master - 1"
   },
   {
-    "InstanceCount": 2,
+    "InstanceCount": 3,
     "BidPrice": "10.000",
     "EbsConfiguration": {
       "EbsBlockDeviceConfigs": [
